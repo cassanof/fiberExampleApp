@@ -1,8 +1,14 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/elleven11/fiberExampleApp/book"
+	"github.com/elleven11/fiberExampleApp/database"
 	"github.com/gofiber/fiber"
+
+	"github.com/jinzhu/gorm"
+	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
 func helloWorld(c *fiber.Ctx) {
@@ -16,8 +22,24 @@ func setupRoutes(app *fiber.App) {
 	app.Delete("/api/v1/book/:id", book.DeleteBook)
 }
 
+func initDatabase() {
+	var err error
+	database.DBConn, err = gorm.Open("sqlite3", "books.db")
+
+	if err != nil {
+		panic("Failed to connect to database")
+	}
+
+	fmt.Println("Database connection was successfully opened")
+
+	database.DBConn.AutoMigrate(&book.Book{})
+	fmt.Println("Database Migrated")
+}
+
 func main() {
 	app := fiber.New()
+	initDatabase()
+	defer database.DBConn.Close()
 
 	setupRoutes(app)
 
